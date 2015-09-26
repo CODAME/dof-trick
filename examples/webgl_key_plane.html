@@ -28,15 +28,80 @@
 
 			var container, stats;
 
-			var camera, scene, renderer, keyPlane, loader, mesh, pushPull, decrementPushPull;
+			var camera, scene, renderer, keyPlane, loader, mesh, pushPull, decrementPushPull, material;
 			var dynamicY =0;
-			var dynamicX=0;
+			var dynamicX = 0;
 			var dynamicZ = 0;
 			var pushPull = 0;
 			var decrementPushPull = false;
 
+			// STLS
+			var SLUG =
+				{
+					url: "models/stl/binary/banana-slug-normal.stl",
+					zoom: 240,
+					scale: 4
+				};
+			var HELMET =
+				{
+					url: "models/stl/binary/fma-helmet-normal.stl",
+					zoom: 290,
+					scale: 8
+				};
+			var SHARK =
+				{
+					url: "models/stl/binary/basking-shark-normal.stl",
+					zoom: 100,
+					scale: 0.5
+				};
+			var FRIES =
+				{
+					url: "models/stl/binary/fries-normal.stl",
+					zoom: 200,
+					scale: 2
+				};
+
+			var currentIndex = -1;
+			var lastStlObject = SLUG;
+			var stlObjects = [HELMET, SHARK, FRIES, lastStlObject];
+
 			init();
 			animate();
+
+			function shuffle(array) {
+			  var current = array.length;
+			  var temp;
+			  var random;
+
+			  while (current != 0) {
+			    random = Math.floor(Math.random() * current);
+			    current -= 1;
+			    temp = array[current];
+			    array[current] = array[random];
+			    array[random] = temp;
+			  }
+
+			  return array;
+			}
+
+			function getStlObjectIndex() {
+				currentIndex++;
+
+				if (currentIndex+1 > stlObjects.length) {
+					stlObjects = shuffle(stlObjects);
+					// last element of previously shuffled list shouldn't be the same as first element of newly shuffled list
+					if (lastStlObject == stlObjects[0]) {
+						currentIndex--;
+						getStlObjectIndex();
+					} else {
+						lastStlObject = stlObjects[stlObjects - 1];
+					}
+					currentIndex = 0;
+					return currentIndex;
+				}
+
+				return currentIndex;
+			}
 
 			function init() {
 
@@ -56,28 +121,29 @@
 				light.position.set( 0, 1, 0 );
 				scene.add( light );
 
+				var black = new THREE.Color(0x000000);
+				//THREE.ImageUtils.generateDataTexture (1, 1, black);
 				var map = THREE.ImageUtils.loadTexture( 'textures/UV_Grid_Sm.jpg' );
 				map.wrapS = map.wrapT = THREE.RepeatWrapping;
 				map.anisotropy = 16;
 
-				var material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide } );
+				material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide } );
 
 				//plane
-				keyPlane = new THREE.Mesh( new THREE.PlaneGeometry( 1000, 1000, 4, 4 ), material );
+				keyPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 4, 4 ), material );
 				keyPlane.position.set( 0, 0, 0 );
 				keyPlane.position.z = 200;
 				scene.add( keyPlane );
 
 				//stl
 				loader = new THREE.STLLoader();
-				loader.load( 'models/stl/binary/fma-helmet-normal.stl', function ( geometry ) {
-
+				var stlObj = stlObjects[getStlObjectIndex()];
+				loader.load(stlObj.url, function ( geometry ) {
 					mesh = new THREE.Mesh( geometry, material );
 
 					//mesh.position.set( 0.136, - 0.37, - 0.6 );
 					//mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
-					var freakingScale = 8;
-					mesh.scale.set( freakingScale, freakingScale, freakingScale);
+					mesh.scale.set(stlObj.scale, stlObj.scale, stlObj.scale);
 
 					mesh.castShadow = true;
 					mesh.receiveShadow = true;
@@ -88,7 +154,6 @@
 					scene.add( mesh );
 
 				} );
-
 
 				//
 
@@ -139,6 +204,8 @@
 
 			}
 
+			var changeStl = 0;
+
 			function render() {
 
 				var timer = Date.now() * 0.0001;
@@ -147,19 +214,41 @@
 				camera.position.z = 600;
 				//-130 to 130
 
-				if(pushPull > 290){
+				if (pushPull > stlObjects[currentIndex].zoom) {
 					decrementPushPull = true;
 				}
-				if(pushPull < 0){
+				if (changeStl == 1) {
+					changeStl++;
+					var stlObj = stlObjects[getStlObjectIndex()];
+					loader.load(stlObj.url, function ( geometry ) {
+						scene.remove(mesh);
+						mesh = new THREE.Mesh( geometry, material );
+
+						//mesh.position.set( 0.136, - 0.37, - 0.6 );
+						//mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
+						mesh.scale.set(stlObj.scale, stlObj.scale, stlObj.scale);
+
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+
+						//mesh.rotation.y = 0;
+						//mesh.rotation.y = 180;
+
+						scene.add( mesh );
+					} );
+				}
+				if (pushPull < 0) {
+					changeStl = 1;
 					decrementPushPull = false;
 				}
-				if(decrementPushPull){
+				if (decrementPushPull) {
 					pushPull--;
-				}else{
+				} else {
 					pushPull++;
 				}
 
-				mesh.position.z = pushPull;
+
+				if (mesh) mesh.position.z = pushPull;
 				//mesh.rotation.y = timer * 20;
 				//mesh.translateZ(130);
 
@@ -169,14 +258,14 @@
 				//keyPlane.rotation.y = 0;
 
 
-				for ( var i = 0, l = scene.children.length; i < l; i ++ ) {
+				// for ( var i = 0, l = scene.children.length; i < l; i ++ ) {
 
-					//var object = scene.children[ i ];
+				// 	var object = scene.children[ i ];
 
-					//mesh.rotation.x = timer * 5;
-					//mesh.rotation.y = timer * 2.5;
+				// 	mesh.rotation.x = timer * 5;
+				// 	mesh.rotation.y = timer * 2.5;
 
-				}
+				// }
 
 				renderer.render( scene, camera );
 
