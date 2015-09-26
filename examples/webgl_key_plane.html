@@ -28,7 +28,7 @@
 
 			var container, stats;
 
-			var camera, scene, renderer, keyPlane, loader, mesh, pushPull, decrementPushPull, material;
+			var camera, scene, renderer, keyPlane, loader, mesh, pushPull, decrementPushPull, material, stlMaterial;
 			var dynamicY =0;
 			var dynamicX = 0;
 			var dynamicZ = 0;
@@ -122,12 +122,17 @@
 				scene.add( light );
 
 				var black = new THREE.Color(0x000000);
-				//THREE.ImageUtils.generateDataTexture (1, 1, black);
-				var map = THREE.ImageUtils.loadTexture( 'textures/UV_Grid_Sm.jpg' );
+				var map = THREE.ImageUtils.generateDataTexture (1, 1, black);
 				map.wrapS = map.wrapT = THREE.RepeatWrapping;
 				map.anisotropy = 16;
-
 				material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide } );
+
+				// stl map
+				var white = new THREE.Color(0xffffff);
+				var stlMap = THREE.ImageUtils.generateDataTexture (1, 1, white);
+				stlMap.wrapS = map.wrapT = THREE.RepeatWrapping;
+				stlMap.anisotropy = 16;
+				stlMaterial = new THREE.MeshLambertMaterial( { map: stlMap, side: THREE.DoubleSide } );
 
 				//plane
 				keyPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 4, 4 ), material );
@@ -136,24 +141,7 @@
 				scene.add( keyPlane );
 
 				//stl
-				loader = new THREE.STLLoader();
-				var stlObj = stlObjects[getStlObjectIndex()];
-				loader.load(stlObj.url, function ( geometry ) {
-					mesh = new THREE.Mesh( geometry, material );
-
-					//mesh.position.set( 0.136, - 0.37, - 0.6 );
-					//mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
-					mesh.scale.set(stlObj.scale, stlObj.scale, stlObj.scale);
-
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-
-					//mesh.rotation.y = 0;
-					//mesh.rotation.y = 180;
-
-					scene.add( mesh );
-
-				} );
+				stlLoad();
 
 				//
 
@@ -182,6 +170,28 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
+			}
+
+			function stlLoad() {
+				loader = new THREE.STLLoader();
+				var stlObj = stlObjects[getStlObjectIndex()];
+				loader.load(stlObj.url, function ( geometry ) {
+					if (mesh) scene.remove(mesh);
+					mesh = new THREE.Mesh( geometry, stlMaterial );
+
+					//mesh.position.set( 0.136, - 0.37, - 0.6 );
+					//mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
+					mesh.scale.set(stlObj.scale, stlObj.scale, stlObj.scale);
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					//mesh.rotation.y = 0;
+					//mesh.rotation.y = 180;
+
+					scene.add( mesh );
+
+				} );
 			}
 
 			function onWindowResize() {
@@ -219,23 +229,7 @@
 				}
 				if (changeStl == 1) {
 					changeStl++;
-					var stlObj = stlObjects[getStlObjectIndex()];
-					loader.load(stlObj.url, function ( geometry ) {
-						scene.remove(mesh);
-						mesh = new THREE.Mesh( geometry, material );
-
-						//mesh.position.set( 0.136, - 0.37, - 0.6 );
-						//mesh.rotation.set( - Math.PI / 2, 0.3, 0 );
-						mesh.scale.set(stlObj.scale, stlObj.scale, stlObj.scale);
-
-						mesh.castShadow = true;
-						mesh.receiveShadow = true;
-
-						//mesh.rotation.y = 0;
-						//mesh.rotation.y = 180;
-
-						scene.add( mesh );
-					} );
+					stlLoad();
 				}
 				if (pushPull < 0) {
 					changeStl = 1;
