@@ -39,31 +39,55 @@
 			var SLUG =
 				{
 					url: "models/stl/binary/banana-slug-normal.stl",
-					zoom: 240,
-					scale: 4
+					zoom: 230,
+					scale: 5
 				};
 			var HELMET =
 				{
 					url: "models/stl/binary/fma-helmet-normal.stl",
-					zoom: 290,
-					scale: 8
+					zoom: 260,
+					scale: 9
 				};
-			var SHARK =
+			var DUCKY =
 				{
-					url: "models/stl/binary/basking-shark-normal.stl",
-					zoom: 100,
-					scale: 0.5
+					url: "models/stl/binary/ducky-normal.stl",
+					zoom: 220,
+					scale: 9
+				};
+			var DRONE =
+				{
+					url: "models/stl/binary/drone-normal.stl",
+					zoom: 260,
+					scale: 4
 				};
 			var FRIES =
 				{
 					url: "models/stl/binary/fries-normal.stl",
-					zoom: 200,
-					scale: 2
+					zoom: 240,
+					scale: 2.1
+				};
+			var CTHULU =
+				{
+					url: "models/stl/binary/cthulu-normal.stl",
+					zoom: 230,
+					scale: 2.1
+				};
+			var HOVER_JET =
+				{
+					url: "models/stl/binary/hover-jet-normal.stl",
+					zoom: 300,
+					scale: 3
+				};
+			var SPIDER =
+				{
+					url: "models/stl/binary/spider-normal.stl",
+					zoom: 180,
+					scale: 4.2
 				};
 
 			var currentIndex = -1;
 			var lastStlObject = SLUG;
-			var stlObjects = [HELMET, SHARK, FRIES, lastStlObject];
+			var stlObjects = [SPIDER, HOVER_JET, CTHULU, FRIES, DRONE, DUCKY, HELMET, lastStlObject];
 
 			init();
 			animate();
@@ -125,19 +149,21 @@
 				var map = THREE.ImageUtils.generateDataTexture (1, 1, black);
 				map.wrapS = map.wrapT = THREE.RepeatWrapping;
 				map.anisotropy = 16;
-				material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide } );
+				material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide, transparent: true } );
+				material.opacity = 1;
 
 				// stl map
 				var white = new THREE.Color(0xffffff);
 				var stlMap = THREE.ImageUtils.generateDataTexture (1, 1, white);
 				stlMap.wrapS = map.wrapT = THREE.RepeatWrapping;
 				stlMap.anisotropy = 16;
-				stlMaterial = new THREE.MeshLambertMaterial( { map: stlMap, side: THREE.DoubleSide } );
+				//stlMaterial = new THREE.MeshLambertMaterial( { map: stlMap, side: THREE.DoubleSide } );
+				stlMaterial = new THREE.MeshNormalMaterial();
 
 				//plane
 				keyPlane = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 4, 4 ), material );
 				keyPlane.position.set( 0, 0, 0 );
-				keyPlane.position.z = 200;
+				keyPlane.position.z = 160;
 				scene.add( keyPlane );
 
 				//stl
@@ -161,11 +187,12 @@
 
 				container.appendChild( renderer.domElement );
 
+				/*
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
 				container.appendChild( stats.domElement );
-
+				*/
 				//
 
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -210,7 +237,7 @@
 				requestAnimationFrame( animate );
 
 				render();
-				stats.update();
+				//stats.update();
 
 			}
 
